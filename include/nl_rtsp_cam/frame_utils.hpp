@@ -101,5 +101,20 @@ class KeyframeGate {
   bool started_ = false;
 };
 
+/** 按平均速率限制发布帧数，同时容纳相机到帧抖动。 */
+class FrameRateLimiter {
+ public:
+  /** 创建限帧器；零表示不限制。 */
+  explicit FrameRateLimiter(int max_fps) noexcept;
+
+  /** 判断当前帧是否可以发布，并在通过时消耗一个令牌。 */
+  [[nodiscard]] bool allow(std::chrono::steady_clock::time_point now) noexcept;
+
+ private:
+  int max_fps_;
+  double tokens_ = 2.0;
+  std::optional<std::chrono::steady_clock::time_point> last_refill_;
+};
+
 }  // namespace nl::rtsp_cam
 #endif  // NL_RTSP_CAM_FRAME_UTILS_HPP_

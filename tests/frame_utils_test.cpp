@@ -123,5 +123,30 @@ TEST(StreamTest, DetectsAnnexBKeyframesWhenDemuxerDoesNotMarkThem) {
   EXPECT_TRUE(contains_keyframe(VideoCodec::kH265, h265_idr));
 }
 
+TEST(FrameRateTest, PreservesFramesArrivingAtConfiguredRateWithJitter) {
+  FrameRateLimiter limiter(24);
+  const auto start = std::chrono::steady_clock::time_point{};
+  for (int i = 0; i < 240; ++i) {
+    const auto nominal = std::chrono::duration_cast<std::chrono::steady_clock::duration>(
+        std::chrono::duration<double>(i / 24.0));
+    const auto jitter = std::chrono::milliseconds(i % 2 == 0 ? 0 : -2);
+    EXPECT_TRUE(limiter.allow(start + nominal + jitter)) << i;
+  }
+}
+
+TEST(FrameRateTest, CapsFasterInputOverTimeWithoutDisablingUnlimitedMode) {
+  FrameRateLimiter limiter(24);
+  FrameRateLimiter unlimited(0);
+  const auto start = std::chrono::steady_clock::time_point{};
+  int accepted = 0;
+  for (int i = 0; i < 300; ++i) {
+    const auto time = start + std::chrono::milliseconds(i * 33);
+    accepted += limiter.allow(time) ? 1 : 0;
+    EXPECT_TRUE(unlimited.allow(time));
+  }
+  EXPECT_GE(accepted, 238);
+  EXPECT_LE(accepted, 240);
+}
+
 }  // namespace
 }  // namespace nl::rtsp_cam

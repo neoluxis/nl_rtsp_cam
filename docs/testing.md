@@ -2,7 +2,7 @@
 author: N. C. Lee
 created on: 2026-10-01
 updated on: 2026-10-03
-version: 0.2.0
+version: 0.3.0
 title: nl_rtsp_cam 测试与板端验收
 tags:
   - Testing
@@ -15,6 +15,7 @@ tags:
 
 | 日期 | 版本 | 作者 | 说明 |
 | --- | --- | --- | --- |
+| 2026-10-03 | 0.3.0 | N. C. Lee | 增加限帧器抖动与超速输入测试。 |
 | 2026-10-03 | 0.2.0 | N. C. Lee | 增加源帧元数据验证要求。 |
 | 2026-10-01 | 0.1.0 | N. C. Lee | 增加 Orb 单元测试命令和 S100 验收步骤。 |
 
@@ -31,11 +32,13 @@ colcon build --base-paths /Users/neolux/Projects/dk2026003/ai_service/nl_rtsp_ca
 ctest --test-dir build/nl_rtsp_cam --output-on-failure
 ```
 
-GTest 覆盖必填 URL 与参数检查、TCP 客户端超时选项、带行跨度的 NV12 拷贝、hbmem 容量、发布模式、缺失 RTCP/NTP 基准、暂停恢复、重连决策和关键帧门控。Orb 没有 S100 视频设备，因此不能把编译成功视为硬件编解码通过。Orb 系统还有一个与本包无关的包管理故障：`hobot-dnn` 安装脚本因 `patchelf` 版本过低失败；`hobot-multimedia-dev` 的头文件和链接库已就位。
+GTest 覆盖必填 URL 与参数检查、TCP 客户端超时选项、带行跨度的 NV12 拷贝、hbmem 容量、发布模式、缺失 RTCP/NTP 基准、暂停恢复、重连决策、关键帧门控，以及限帧器在目标帧率抖动和超速输入下的行为。Orb 没有 S100 视频设备，因此不能把编译成功视为硬件编解码通过。Orb 系统还有一个与本包无关的包管理故障：`hobot-dnn` 安装脚本因 `patchelf` 版本过低失败；`hobot-multimedia-dev` 的头文件和链接库已就位。
 
 2026-10-01 实际执行：`colcon build` 输出 `1 package finished`；`ctest --test-dir /tmp/nl_rtsp_build/nl_rtsp_cam --output-on-failure` 输出 `100% tests passed, 0 tests failed out of 1`，其 GTest 包含 10 个行为场景。节点对空 URL 输出 `rtsp_url is required` 并以状态码 1 退出。使用不可达的 `rtsp://127.0.0.1:1/stream` 验证每约 2 秒重试；调用 `/set_capture` 的 false 返回 `capture stopped` 并停止重试，true 返回 `capture started` 后恢复重试；SIGINT 后进程正常退出。此检查只验证网络失败与服务控制，不验证图像硬件链路。
 
 两个已安装的 launch 均通过 `ros2 launch nl_rtsp_cam <文件名> --show-args` 参数解析，空 URL 参数检查通过。Web 预览的画面输出仍需板端 RTSP 流验证。
+
+2026-10-03 限帧器修正后再次在 Orb 构建，`ctest --test-dir /tmp/dk2026003-build/nl_rtsp_cam --output-on-failure` 输出 `100% tests passed, 0 tests failed out of 1`，其中 GTest 包含新增的两个限帧行为场景。
 
 ## Sanitizer
 
@@ -64,4 +67,6 @@ ctest --preset tsan
 5. 依次调用 `set_capture` 的 false/true，确认停止与恢复；断开并恢复网络，确认超时后自动重连。
 6. 设置 `timestamp_source:=camera`，确认收到 RTCP 时间基准前不发布帧，收到后与摄像机 NTP 时间一致；关闭摄像机 NTP 时验证持续警告而无错误时间戳帧。
 
-在板端记录各项命令、实际输出和摄像机型号后，更新本节的验收结果。当前尚无 S100 实机结果。
+S100 已使用 11 路 640×512 H.264 模拟流完成 5 FPS 与 24 FPS 并发硬解测试，修正限帧后的逐路采集观测值为 23.13–24.07 FPS；完整测试条件、检测与滞后数据见多路验收记录[^multi]。真实相机、H.265/MJPEG、相机 NTP 时间戳、JPEG 输出与长时间稳定性仍需现场验证。
+
+[^multi]: [多路检测测试与 S100 验收记录](../../docs/testing/multicamera-detection.md#s100-十一路模拟流压测)

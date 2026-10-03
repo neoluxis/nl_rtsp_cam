@@ -1,6 +1,6 @@
 # S100 RTSP ROS 2 摄像头包的构建入口。
 cmake_minimum_required(VERSION 3.22)
-project(nl_rtsp_cam VERSION 0.2.0 LANGUAGES CXX)
+project(nl_rtsp_cam VERSION 0.3.0 LANGUAGES CXX)
 
 find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)

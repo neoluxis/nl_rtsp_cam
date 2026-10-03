@@ -2,7 +2,7 @@
 author: N. C. Lee
 created on: 2026-10-01
 updated on: 2026-10-03
-version: 0.2.0
+version: 0.3.0
 title: S100 RTSP 摄像头 ROS 2 包
 tags:
   - ROS 2
@@ -15,12 +15,15 @@ tags:
 
 | 日期 | 版本 | 作者 | 说明 |
 | --- | --- | --- | --- |
+| 2026-10-03 | 0.3.0 | N. C. Lee | 调整限帧器，减少多路相机到帧抖动导致的误丢帧。 |
 | 2026-10-03 | 0.2.0 | N. C. Lee | 增加每帧节点、相机和帧序号元数据。 |
 | 2026-10-01 | 0.1.0 | N. C. Lee | 新增单路 RTSP、S100 硬解、JPEG 输出和 launch。 |
 
 ## 功能与环境
 
 `nl_rtsp_cam` 每个节点连接一路 RTSP 视频，以 FFmpeg 拆流，经 RDK S100 `libmm` 硬解 H.264、H.265 或 MJPEG 后发布 NV12 图像。可选择硬件编码 JPEG，也可用 `HbmMsg1080P` 发布。目标系统为 RDK S100 的 TROS Humble；最高输入分辨率为 1920×1080，图像宽高必须为偶数。节点使用 ROS 日志，日志文件位于 ROS 日志目录。
+
+`framerate` 限制平均发布帧率；限帧器允许两帧的短时余量，避免输入与配置同为 24 FPS 时因到帧抖动持续误丢帧。
 
 Orb Ubuntu 用于编译和不依赖硬件的测试；运行硬解与硬编需要 S100。构建前应安装 `hobot-multimedia-dev`、FFmpeg 开发包和 TROS Humble。
 

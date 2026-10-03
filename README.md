@@ -2,7 +2,7 @@
 author: N. C. Lee
 created on: 2026-10-01
 updated on: 2026-10-03
-version: 0.2.0
+version: 0.3.0
 title: S100 RTSP Camera ROS 2 Package
 tags:
   - ROS 2
@@ -15,12 +15,15 @@ tags:
 
 | Date | Version | Author | Change |
 | --- | --- | --- | --- |
+| 2026-10-03 | 0.3.0 | N. C. Lee | Smoothed publication rate limiting for multi-camera input. |
 | 2026-10-03 | 0.2.0 | N. C. Lee | Added source frame metadata for multi-camera detection. |
 | 2026-10-01 | 0.1.0 | N. C. Lee | Added single-stream RTSP capture, S100 decoding, JPEG output, and launch files. |
 
 `nl_rtsp_cam` connects one RTSP stream per node. FFmpeg receives H.264, H.265, or MJPEG video; RDK S100 `libmm` decodes it to NV12. The default `image` topic carries `sensor_msgs/Image`. Set `pixel_format:=jpeg` to publish `sensor_msgs/CompressedImage`, or `zero_copy:=true` to publish `HbmMsg1080P` on `hbmem_img`. The supported input limit is 1920×1080.
 
 Each published frame also has a `frame_metadata` message (`nl_image_msgs/FrameMetadata`). Set `node_id` and `camera_id` per instance. Its stamp and frame index match the source image; in shared-memory mode the index matches `HbmMsg1080P.index`.
+
+`framerate` limits the average published frame rate. A two-frame allowance absorbs small arrival jitter so a 24 FPS source configured at 24 FPS is not systematically reduced.
 
 Build in TROS Humble with FFmpeg development packages and `hobot-multimedia-dev`:
 

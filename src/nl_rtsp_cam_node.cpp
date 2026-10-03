@@ -247,7 +247,7 @@ class RtspCamNode final : public rclcpp::Node {
     if (!packet || !filtered)
       throw std::runtime_error("packet allocation failed");
     KeyframeGate keyframe_gate;
-    auto last_published = std::chrono::steady_clock::time_point::min();
+    FrameRateLimiter rate_limiter(config_.framerate);
     while (!stopping_.load() && capture_state_.enabled()) {
       reset_deadline(config_.read_timeout_ms);
       const int result = av_read_frame(format.get(), packet.get());
@@ -276,13 +276,13 @@ class RtspCamNode final : public rclcpp::Node {
           throw std::runtime_error("bitstream filter input failed");
         int filter_result = 0;
         while ((filter_result = av_bsf_receive_packet(filter.get(), filtered.get())) == 0) {
-          process_packet(*filtered, decoder, encoder.get(), *format, *stream, last_published);
+          process_packet(*filtered, decoder, encoder.get(), *format, *stream, rate_limiter);
           av_packet_unref(filtered.get());
         }
         if (filter_result != AVERROR(EAGAIN) && filter_result != AVERROR_EOF)
           throw std::runtime_error("bitstream filter output failed");
       } else {
-        process_packet(*packet, decoder, encoder.get(), *format, *stream, last_published);
+        process_packet(*packet, decoder, encoder.get(), *format, *stream, rate_limiter);
       }
       av_packet_unref(packet.get());
     }
@@ -293,7 +293,7 @@ class RtspCamNode final : public rclcpp::Node {
                       S100JpegEncoder* encoder,
                       const AVFormatContext& format,
                       const AVStream& stream,
-                      std::chrono::steady_clock::time_point& last_published) {
+                      FrameRateLimiter& rate_limiter) {
     if (packet.size <= 0)
       return;
     decoder.submit(packet.data, packet.size, packet.pts);
@@ -302,8 +302,7 @@ class RtspCamNode final : public rclcpp::Node {
       if (!frame)
         break;
       const auto now = std::chrono::steady_clock::now();
-      if (config_.framerate > 0 && last_published != std::chrono::steady_clock::time_point::min() &&
-          now - last_published < std::chrono::duration<double>(1.0 / config_.framerate))
+      if (!rate_limiter.allow(now))
         continue;
       std_msgs::msg::Header header;
       header.frame_id = config_.frame_id;
@@ -319,7 +318,6 @@ class RtspCamNode final : public rclcpp::Node {
         header.stamp = this->now();
       }
       publish_frame(*frame, encoder, header);
-      last_published = now;
     }
   }
 

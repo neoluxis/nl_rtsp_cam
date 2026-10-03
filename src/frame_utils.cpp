@@ -137,4 +137,21 @@ bool KeyframeGate::accept(bool keyframe) noexcept {
   return started_;
 }
 
+FrameRateLimiter::FrameRateLimiter(int max_fps) noexcept : max_fps_(max_fps) {}
+
+bool FrameRateLimiter::allow(std::chrono::steady_clock::time_point now) noexcept {
+  if (max_fps_ <= 0)
+    return true;
+  if (last_refill_) {
+    const double elapsed = std::chrono::duration<double>(now - *last_refill_).count();
+    if (elapsed > 0)
+      tokens_ = std::min(2.0, tokens_ + elapsed * max_fps_);
+  }
+  last_refill_ = now;
+  if (tokens_ < 1.0)
+    return false;
+  tokens_ -= 1.0;
+  return true;
+}
+
 }  // namespace nl::rtsp_cam
