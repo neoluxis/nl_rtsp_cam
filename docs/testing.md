@@ -1,8 +1,8 @@
 ---
 author: N. C. Lee
 created on: 2026-10-01
-updated on: 2026-10-01
-version: 0.1.0
+updated on: 2026-10-03
+version: 0.2.0
 title: nl_rtsp_cam 测试与板端验收
 tags:
   - Testing
@@ -15,6 +15,7 @@ tags:
 
 | 日期 | 版本 | 作者 | 说明 |
 | --- | --- | --- | --- |
+| 2026-10-03 | 0.2.0 | N. C. Lee | 增加源帧元数据验证要求。 |
 | 2026-10-01 | 0.1.0 | N. C. Lee | 增加 Orb 单元测试命令和 S100 验收步骤。 |
 
 ## Orb Ubuntu
@@ -58,6 +59,7 @@ ctest --preset tsan
 1. 启动默认 launch，检查 `ros2 topic type /image` 为 `sensor_msgs/msg/Image`，编码为 `nv12`，宽高和数据长度正确；检查稳定发布至少 30 秒。
 2. 启动 `pixel_format:=jpeg`，确认 `sensor_msgs/msg/CompressedImage` 的 JPEG 图像可解码；运行 Web 预览 launch 检查画面。
 3. 启动 `zero_copy:=true`，确认 `hbmem_img` 的编码、数据大小和时间戳正确，且未发布普通 `image`。
+   同时检查 `frame_metadata` 的时间戳、宽高与 `hbmem_img` 一致，帧序号等于 `hbmem_img.index`。
 4. 设置标定 YAML，确认 `camera_info` 与图像时间戳和帧 ID 一致；标定分辨率不匹配时不发布标定消息。
 5. 依次调用 `set_capture` 的 false/true，确认停止与恢复；断开并恢复网络，确认超时后自动重连。
 6. 设置 `timestamp_source:=camera`，确认收到 RTCP 时间基准前不发布帧，收到后与摄像机 NTP 时间一致；关闭摄像机 NTP 时验证持续警告而无错误时间戳帧。

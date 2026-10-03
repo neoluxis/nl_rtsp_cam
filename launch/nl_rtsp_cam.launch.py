@@ -19,6 +19,8 @@ def generate_launch_description():
         DeclareLaunchArgument("pixel_format", default_value="nv12"),
         DeclareLaunchArgument("timestamp_source", default_value="receive"),
         DeclareLaunchArgument("frame_id", default_value="rtsp_cam"),
+        DeclareLaunchArgument("node_id", default_value="local"),
+        DeclareLaunchArgument("camera_id", default_value="camera0"),
         DeclareLaunchArgument("camera_calibration_file_path", default_value=""),
         DeclareLaunchArgument("connect_timeout_ms", default_value="5000"),
         DeclareLaunchArgument("read_timeout_ms", default_value="5000"),
@@ -55,6 +57,8 @@ def generate_launch_description():
                         "pixel_format": LaunchConfiguration("pixel_format"),
                         "timestamp_source": LaunchConfiguration("timestamp_source"),
                         "frame_id": LaunchConfiguration("frame_id"),
+                        "node_id": LaunchConfiguration("node_id"),
+                        "camera_id": LaunchConfiguration("camera_id"),
                         "camera_calibration_file_path": LaunchConfiguration(
                             "camera_calibration_file_path"
                         ),

@@ -23,6 +23,8 @@ std::string validate_config(const Config& config) {
     return "invalid timestamp_source";
   if (config.frame_id.empty())
     return "frame_id is required";
+  if (config.node_id.empty() || config.camera_id.empty())
+    return "node_id and camera_id are required";
   if (config.connect_timeout_ms <= 0 || config.read_timeout_ms <= 0 ||
       config.reconnect_delay_ms < 0 || config.framerate < 0)
     return "invalid timeout or framerate";

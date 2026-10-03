@@ -1,8 +1,8 @@
 ---
 author: N. C. Lee
 created on: 2026-10-01
-updated on: 2026-10-01
-version: 0.1.0
+updated on: 2026-10-03
+version: 0.2.0
 title: S100 RTSP 摄像头 ROS 2 包
 tags:
   - ROS 2
@@ -15,6 +15,7 @@ tags:
 
 | 日期 | 版本 | 作者 | 说明 |
 | --- | --- | --- | --- |
+| 2026-10-03 | 0.2.0 | N. C. Lee | 增加每帧节点、相机和帧序号元数据。 |
 | 2026-10-01 | 0.1.0 | N. C. Lee | 新增单路 RTSP、S100 硬解、JPEG 输出和 launch。 |
 
 ## 功能与环境
@@ -63,6 +64,7 @@ ros2 service call /camera_01/set_capture std_srvs/srv/SetBool '{data: true}'
 | `image` | `sensor_msgs/msg/CompressedImage`，格式 `jpeg` | `pixel_format=jpeg` |
 | `hbmem_img` | `hbm_img_msgs/msg/HbmMsg1080P` | `zero_copy=true`，取代 `image` |
 | `camera_info` | `sensor_msgs/msg/CameraInfo` | 标定文件有效且分辨率匹配 |
+| `frame_metadata` | `nl_image_msgs/msg/FrameMetadata` | 成功发布图像后提供相同时间戳和帧序号 |
 | `set_capture` | `std_srvs/srv/SetBool` | 始终提供；`false` 停止，`true` 重连 |
 
 | 参数 | 默认值 | 说明 |
@@ -73,6 +75,8 @@ ros2 service call /camera_01/set_capture std_srvs/srv/SetBool '{data: true}'
 | `zero_copy` | `false` | 使用 `hbmem_img` 话题 |
 | `timestamp_source` | `receive` | `receive` 为本机时间；`camera` 为 RTCP/NTP 时间 |
 | `frame_id` | `rtsp_cam` | 图像与标定消息的帧 ID |
+| `node_id` | `local` | 元数据中的源节点 ID |
+| `camera_id` | `camera0` | 元数据中的源相机 ID |
 | `camera_calibration_file_path` | 空 | ROS 相机标定 YAML 文件 |
 | `framerate` | `0` | 最大发布帧率；`0` 不限速 |
 | `bitstream_buffer_bytes` | `8388608` | 单个压缩帧的硬解输入缓冲区字节数；可设为 1–64 MiB |

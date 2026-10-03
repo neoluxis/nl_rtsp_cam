@@ -25,6 +25,8 @@ struct Config {
   std::string pixel_format = "nv12";
   std::string timestamp_source = "receive";
   std::string frame_id = "rtsp_cam";
+  std::string node_id = "local";
+  std::string camera_id = "camera0";
   std::string camera_calibration_file_path;
   int connect_timeout_ms = 5000;
   int read_timeout_ms = 5000;

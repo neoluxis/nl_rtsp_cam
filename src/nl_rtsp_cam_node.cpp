@@ -20,6 +20,7 @@ extern "C" {
 #include <yaml-cpp/yaml.h>
 
 #include "hbm_img_msgs/msg/hbm_msg1080_p.hpp"
+#include "nl_image_msgs/msg/frame_metadata.hpp"
 #include "nl_rtsp_cam/frame_utils.hpp"
 #include "nl_rtsp_cam/s100_codec.hpp"
 #include "rclcpp/rclcpp.hpp"
@@ -105,6 +106,8 @@ class RtspCamNode final : public rclcpp::Node {
     config_.pixel_format = declare_parameter<std::string>("pixel_format", "nv12");
     config_.timestamp_source = declare_parameter<std::string>("timestamp_source", "receive");
     config_.frame_id = declare_parameter<std::string>("frame_id", "rtsp_cam");
+    config_.node_id = declare_parameter<std::string>("node_id", "local");
+    config_.camera_id = declare_parameter<std::string>("camera_id", "camera0");
     config_.camera_calibration_file_path =
         declare_parameter<std::string>("camera_calibration_file_path", "");
     config_.connect_timeout_ms = declare_parameter<int>("connect_timeout_ms", 5000);
@@ -129,6 +132,8 @@ class RtspCamNode final : public rclcpp::Node {
     }
     camera_info_publisher_ =
         create_publisher<sensor_msgs::msg::CameraInfo>("camera_info", rclcpp::QoS(10));
+    frame_metadata_publisher_ =
+        create_publisher<nl_image_msgs::msg::FrameMetadata>("frame_metadata", rclcpp::SensorDataQoS());
     try {
       calibration_ = load_calibration(config_.camera_calibration_file_path);
     } catch (const std::exception& e) {
@@ -321,6 +326,7 @@ class RtspCamNode final : public rclcpp::Node {
   void publish_frame(const Nv12Frame& frame,
                      S100JpegEncoder* encoder,
                      const std_msgs::msg::Header& header) {
+    const uint32_t frame_index = frame_index_++;
     std::vector<uint8_t> jpeg;
     const std::vector<uint8_t>* data = &frame.data;
     if (encoder != nullptr) {
@@ -334,7 +340,7 @@ class RtspCamNode final : public rclcpp::Node {
       auto& message = loan.get();
       if (data->size() > message.data.size())
         throw std::runtime_error("hbmem data capacity exceeded");
-      message.index = frame_index_++;
+      message.index = frame_index;
       message.time_stamp = header.stamp;
       message.width = frame.width;
       message.height = frame.height;
@@ -362,6 +368,14 @@ class RtspCamNode final : public rclcpp::Node {
       message.data = frame.data;
       image_publisher_->publish(message);
     }
+    nl_image_msgs::msg::FrameMetadata metadata;
+    metadata.header = header;
+    metadata.node_id = config_.node_id;
+    metadata.camera_id = config_.camera_id;
+    metadata.frame_index = frame_index;
+    metadata.width = frame.width;
+    metadata.height = frame.height;
+    frame_metadata_publisher_->publish(metadata);
     if (calibration_) {
       if (calibration_->width != static_cast<uint32_t>(frame.width) ||
           calibration_->height != static_cast<uint32_t>(frame.height)) {
@@ -388,6 +402,7 @@ class RtspCamNode final : public rclcpp::Node {
   rclcpp::Publisher<sensor_msgs::msg::CompressedImage>::SharedPtr jpeg_publisher_;
   rclcpp::Publisher<hbm_img_msgs::msg::HbmMsg1080P>::SharedPtr hbmem_publisher_;
   rclcpp::Publisher<sensor_msgs::msg::CameraInfo>::SharedPtr camera_info_publisher_;
+  rclcpp::Publisher<nl_image_msgs::msg::FrameMetadata>::SharedPtr frame_metadata_publisher_;
   rclcpp::Service<std_srvs::srv::SetBool>::SharedPtr capture_service_;
 };
 

@@ -28,6 +28,9 @@ TEST(ConfigTest, RejectsMissingUrlAndInvalidModes) {
   config.timestamp_source = "invalid";
   EXPECT_FALSE(validate_config(config).empty());
   config.timestamp_source = "receive";
+  config.camera_id.clear();
+  EXPECT_EQ(validate_config(config), "node_id and camera_id are required");
+  config.camera_id = "camera0";
   config.bitstream_buffer_bytes = 0;
   EXPECT_FALSE(validate_config(config).empty());
 }
