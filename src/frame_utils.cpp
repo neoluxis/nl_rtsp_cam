@@ -26,7 +26,7 @@ std::string validate_config(const Config& config) {
   if (config.node_id.empty() || config.camera_id.empty())
     return "node_id and camera_id are required";
   if (config.connect_timeout_ms <= 0 || config.read_timeout_ms <= 0 ||
-      config.reconnect_delay_ms < 0 || config.framerate < 0)
+      config.reconnect_delay_ms < 0 || config.framerate < 0 || config.ros_image_fps < 0)
     return "invalid timeout or framerate";
   if (config.bitstream_buffer_bytes < 1024 * 1024 ||
       config.bitstream_buffer_bytes > 64 * 1024 * 1024)

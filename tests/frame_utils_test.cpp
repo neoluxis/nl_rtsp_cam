@@ -33,6 +33,9 @@ TEST(ConfigTest, RejectsMissingUrlAndInvalidModes) {
   config.camera_id = "camera0";
   config.bitstream_buffer_bytes = 0;
   EXPECT_FALSE(validate_config(config).empty());
+  config.bitstream_buffer_bytes = 8 * 1024 * 1024;
+  config.ros_image_fps = -1;
+  EXPECT_FALSE(validate_config(config).empty());
 }
 
 TEST(FrameTest, CopiesPaddedNv12PlanesWithoutPadding) {

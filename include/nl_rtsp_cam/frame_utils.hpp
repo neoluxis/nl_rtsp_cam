@@ -32,8 +32,10 @@ struct Config {
   int read_timeout_ms = 5000;
   int reconnect_delay_ms = 2000;
   int framerate = 0;
+  int ros_image_fps = 0;
   int bitstream_buffer_bytes = 8 * 1024 * 1024;
   bool zero_copy = false;
+  bool publish_ros_image = false;
 };
 
 /** Annex B 视频编码种类。 */

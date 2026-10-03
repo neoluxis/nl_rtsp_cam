@@ -2,7 +2,7 @@
 author: N. C. Lee
 created on: 2026-10-01
 updated on: 2026-10-03
-version: 0.3.0
+version: 0.4.0
 title: S100 RTSP 摄像头 ROS 2 包
 tags:
   - ROS 2
@@ -15,6 +15,7 @@ tags:
 
 | 日期 | 版本 | 作者 | 说明 |
 | --- | --- | --- | --- |
+| 2026-10-03 | 0.4.0 | N. C. Lee | 共享内存取流时可按需同步发布限帧标准 ROS 图像。 |
 | 2026-10-03 | 0.3.0 | N. C. Lee | 调整限帧器，减少多路相机到帧抖动导致的误丢帧。 |
 | 2026-10-03 | 0.2.0 | N. C. Lee | 增加每帧节点、相机和帧序号元数据。 |
 | 2026-10-01 | 0.1.0 | N. C. Lee | 新增单路 RTSP、S100 硬解、JPEG 输出和 launch。 |
@@ -65,7 +66,8 @@ ros2 service call /camera_01/set_capture std_srvs/srv/SetBool '{data: true}'
 | --- | --- | --- |
 | `image` | `sensor_msgs/msg/Image`，编码 `nv12` | 默认 |
 | `image` | `sensor_msgs/msg/CompressedImage`，格式 `jpeg` | `pixel_format=jpeg` |
-| `hbmem_img` | `hbm_img_msgs/msg/HbmMsg1080P` | `zero_copy=true`，取代 `image` |
+| `hbmem_img` | `hbm_img_msgs/msg/HbmMsg1080P` | `zero_copy=true`，供板端 DNN 使用 |
+| `image` | `sensor_msgs/msg/Image`，编码 `nv12` | `zero_copy=true` 且 `publish_ros_image=true`；有订阅者时按 `ros_image_fps` 发布 |
 | `camera_info` | `sensor_msgs/msg/CameraInfo` | 标定文件有效且分辨率匹配 |
 | `frame_metadata` | `nl_image_msgs/msg/FrameMetadata` | 成功发布图像后提供相同时间戳和帧序号 |
 | `set_capture` | `std_srvs/srv/SetBool` | 始终提供；`false` 停止，`true` 重连 |
@@ -76,6 +78,8 @@ ros2 service call /camera_01/set_capture std_srvs/srv/SetBool '{data: true}'
 | `rtsp_transport` | `tcp` | `tcp` 或 `udp` |
 | `pixel_format` | `nv12` | `nv12` 或 `jpeg` |
 | `zero_copy` | `false` | 使用 `hbmem_img` 话题 |
+| `publish_ros_image` | `false` | 共享内存模式下额外提供标准 ROS 原始图像；没有订阅者时不复制 |
+| `ros_image_fps` | `0` | 额外 ROS 图像最大发布帧率；`0` 不限速 |
 | `timestamp_source` | `receive` | `receive` 为本机时间；`camera` 为 RTCP/NTP 时间 |
 | `frame_id` | `rtsp_cam` | 图像与标定消息的帧 ID |
 | `node_id` | `local` | 元数据中的源节点 ID |

@@ -28,6 +28,8 @@ def generate_launch_description():
         DeclareLaunchArgument("framerate", default_value="0"),
         DeclareLaunchArgument("bitstream_buffer_bytes", default_value="8388608"),
         DeclareLaunchArgument("zero_copy", default_value="false"),
+        DeclareLaunchArgument("publish_ros_image", default_value="false"),
+        DeclareLaunchArgument("ros_image_fps", default_value="0"),
         DeclareLaunchArgument("log_level", default_value="info"),
     ]
     shm_launch = os.path.join(
@@ -79,6 +81,12 @@ def generate_launch_description():
                         ),
                         "zero_copy": ParameterValue(
                             LaunchConfiguration("zero_copy"), value_type=bool
+                        ),
+                        "publish_ros_image": ParameterValue(
+                            LaunchConfiguration("publish_ros_image"), value_type=bool
+                        ),
+                        "ros_image_fps": ParameterValue(
+                            LaunchConfiguration("ros_image_fps"), value_type=int
                         ),
                     }
                 ],

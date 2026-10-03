@@ -114,9 +114,11 @@ class RtspCamNode final : public rclcpp::Node {
     config_.read_timeout_ms = declare_parameter<int>("read_timeout_ms", 5000);
     config_.reconnect_delay_ms = declare_parameter<int>("reconnect_delay_ms", 2000);
     config_.framerate = declare_parameter<int>("framerate", 0);
+    config_.ros_image_fps = declare_parameter<int>("ros_image_fps", 0);
     config_.bitstream_buffer_bytes =
         declare_parameter<int>("bitstream_buffer_bytes", 8 * 1024 * 1024);
     config_.zero_copy = declare_parameter<bool>("zero_copy", false);
+    config_.publish_ros_image = declare_parameter<bool>("publish_ros_image", false);
     const auto error = validate_config(config_);
     if (!error.empty())
       throw std::invalid_argument(error);
@@ -124,6 +126,12 @@ class RtspCamNode final : public rclcpp::Node {
     if (mode == PublicationMode::kHbmem) {
       hbmem_publisher_ =
           create_publisher<hbm_img_msgs::msg::HbmMsg1080P>("hbmem_img", rclcpp::SensorDataQoS());
+      if (config_.publish_ros_image) {
+        // 共享内存图像供板端 DNN 使用；标准 ROS 图像仅在外部订阅时复制发布。
+        image_publisher_ = create_publisher<sensor_msgs::msg::Image>(
+            "image", rclcpp::SensorDataQoS().keep_last(1));
+        ros_image_rate_limiter_ = std::make_unique<FrameRateLimiter>(config_.ros_image_fps);
+      }
     } else if (mode == PublicationMode::kRosJpeg) {
       jpeg_publisher_ =
           create_publisher<sensor_msgs::msg::CompressedImage>("image", rclcpp::QoS(10));
@@ -349,6 +357,18 @@ class RtspCamNode final : public rclcpp::Node {
       std::memcpy(message.encoding.data(), encoding, std::strlen(encoding));
       std::copy(data->begin(), data->end(), message.data.begin());
       hbmem_publisher_->publish(std::move(loan));
+      if (image_publisher_ && image_publisher_->get_subscription_count() > 0 &&
+          ros_image_rate_limiter_->allow(std::chrono::steady_clock::now())) {
+        sensor_msgs::msg::Image message;
+        message.header = header;
+        message.width = frame.width;
+        message.height = frame.height;
+        message.encoding = "nv12";
+        message.step = frame.width;
+        message.is_bigendian = false;
+        message.data = frame.data;
+        image_publisher_->publish(message);
+      }
     } else if (encoder != nullptr) {
       sensor_msgs::msg::CompressedImage message;
       message.header = header;
@@ -397,6 +417,7 @@ class RtspCamNode final : public rclcpp::Node {
   uint32_t frame_index_ = 0;
   std::optional<sensor_msgs::msg::CameraInfo> calibration_;
   rclcpp::Publisher<sensor_msgs::msg::Image>::SharedPtr image_publisher_;
+  std::unique_ptr<FrameRateLimiter> ros_image_rate_limiter_;
   rclcpp::Publisher<sensor_msgs::msg::CompressedImage>::SharedPtr jpeg_publisher_;
   rclcpp::Publisher<hbm_img_msgs::msg::HbmMsg1080P>::SharedPtr hbmem_publisher_;
   rclcpp::Publisher<sensor_msgs::msg::CameraInfo>::SharedPtr camera_info_publisher_;
