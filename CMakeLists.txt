@@ -1,6 +1,6 @@
 # S100 RTSP ROS 2 摄像头包的构建入口。
 cmake_minimum_required(VERSION 3.22)
-project(nl_rtsp_cam VERSION 0.4.0 LANGUAGES CXX)
+project(nl_rtsp_cam VERSION 0.5.0 LANGUAGES CXX)
 
 find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
@@ -32,10 +32,18 @@ target_include_directories(nl_rtsp_cam_core PUBLIC
 target_include_directories(nl_rtsp_cam_core PUBLIC ${S100_MEDIA_INCLUDE_DIR})
 target_link_libraries(nl_rtsp_cam_core PRIVATE nl_rtsp_cam_frame_utils ${HB_MULTIMEDIA_LIBRARY})
 
+add_library(nl_rtsp_cam_calibration STATIC src/calibration.cpp)
+target_compile_features(nl_rtsp_cam_calibration PUBLIC cxx_std_20)
+target_include_directories(nl_rtsp_cam_calibration PUBLIC
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+  $<INSTALL_INTERFACE:include>)
+target_link_libraries(nl_rtsp_cam_calibration yaml-cpp)
+ament_target_dependencies(nl_rtsp_cam_calibration sensor_msgs)
+
 add_executable(nl_rtsp_cam src/nl_rtsp_cam_node.cpp)
 target_compile_features(nl_rtsp_cam PRIVATE cxx_std_20)
 target_include_directories(nl_rtsp_cam PRIVATE ${S100_MEDIA_INCLUDE_DIR})
-target_link_libraries(nl_rtsp_cam nl_rtsp_cam_core nl_rtsp_cam_frame_utils PkgConfig::AVFORMAT
+target_link_libraries(nl_rtsp_cam nl_rtsp_cam_core nl_rtsp_cam_frame_utils nl_rtsp_cam_calibration PkgConfig::AVFORMAT
   PkgConfig::AVCODEC PkgConfig::AVUTIL yaml-cpp ${HB_MULTIMEDIA_LIBRARY})
 set_target_properties(nl_rtsp_cam PROPERTIES BUILD_RPATH "/usr/hobot/lib"
   INSTALL_RPATH "/usr/hobot/lib")
@@ -44,6 +52,7 @@ ament_target_dependencies(nl_rtsp_cam rclcpp std_msgs sensor_msgs std_srvs hbm_i
 if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
   target_compile_options(nl_rtsp_cam_frame_utils PRIVATE -Wall -Wextra -Wpedantic)
   target_compile_options(nl_rtsp_cam_core PRIVATE -Wall -Wextra -Wpedantic)
+  target_compile_options(nl_rtsp_cam_calibration PRIVATE -Wall -Wextra -Wpedantic)
   target_compile_options(nl_rtsp_cam PRIVATE -Wall -Wextra -Wpedantic)
 endif()
 

@@ -17,10 +17,9 @@ extern "C" {
 #include <libavformat/avformat.h>
 }
 
-#include <yaml-cpp/yaml.h>
-
 #include "hbm_img_msgs/msg/hbm_msg1080_p.hpp"
 #include "nl_image_msgs/msg/frame_metadata.hpp"
+#include "nl_rtsp_cam/calibration.hpp"
 #include "nl_rtsp_cam/frame_utils.hpp"
 #include "nl_rtsp_cam/s100_codec.hpp"
 #include "rclcpp/rclcpp.hpp"
@@ -37,31 +36,6 @@ int64_t steady_millis() {
   return std::chrono::duration_cast<std::chrono::milliseconds>(
              std::chrono::steady_clock::now().time_since_epoch())
       .count();
-}
-
-std::optional<sensor_msgs::msg::CameraInfo> load_calibration(const std::string& path) {
-  if (path.empty())
-    return std::nullopt;
-  const YAML::Node doc = YAML::LoadFile(path);
-  sensor_msgs::msg::CameraInfo info;
-  info.width = doc["image_width"].as<uint32_t>();
-  info.height = doc["image_height"].as<uint32_t>();
-  info.distortion_model = doc["distortion_model"].as<std::string>();
-  const auto k = doc["camera_matrix"]["data"];
-  const auto r = doc["rectification_matrix"]["data"];
-  const auto p = doc["projection_matrix"]["data"];
-  const auto d = doc["distortion_coefficients"]["data"];
-  if (k.size() != 9 || r.size() != 9 || p.size() != 12 || d.size() == 0)
-    throw std::runtime_error("invalid camera calibration matrix");
-  for (size_t i = 0; i < 9; ++i) {
-    info.k[i] = k[i].as<double>();
-    info.r[i] = r[i].as<double>();
-  }
-  for (size_t i = 0; i < 12; ++i)
-    info.p[i] = p[i].as<double>();
-  for (const auto& value : d)
-    info.d.push_back(value.as<double>());
-  return info;
 }
 
 media_codec_id_t hardware_codec(AVCodecID codec) {

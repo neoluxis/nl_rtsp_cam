@@ -1,8 +1,8 @@
 ---
 author: N. C. Lee
 created on: 2026-10-01
-updated on: 2026-10-03
-version: 0.4.0
+updated on: 2026-10-04
+version: 0.5.0
 title: nl_rtsp_cam 测试与板端验收
 tags:
   - Testing
@@ -15,12 +15,13 @@ tags:
 
 | 日期 | 版本 | 作者 | 说明 |
 | --- | --- | --- | --- |
+| 2026-10-04 | 0.5.0 | N. C. Lee | 增加统一相机文件的标定解析测试，后续验证仅在 S100 执行。 |
 | 2026-10-03 | 0.4.0 | N. C. Lee | 记录共享内存和标准 NV12 双输出的 S100 实机验证。 |
 | 2026-10-03 | 0.3.0 | N. C. Lee | 增加限帧器抖动与超速输入测试。 |
 | 2026-10-03 | 0.2.0 | N. C. Lee | 增加源帧元数据验证要求。 |
 | 2026-10-01 | 0.1.0 | N. C. Lee | 增加 Orb 单元测试命令和 S100 验收步骤。 |
 
-## Orb Ubuntu
+## 既有 Orb Ubuntu 历史记录
 
 在 Orb 的 `ubuntu` 虚拟机中运行；源代码由 Orb 共享挂载。测试开关默认全为 `OFF`，须逐层打开：
 
@@ -57,6 +58,8 @@ ctest --preset tsan
 2026-10-01 实际执行：ASan/UBSan 与 TSan 的 CTest 均输出 `100% tests passed, 0 tests failed out of 1`。这些测试只执行不依赖硬件的逻辑；S100 编解码与 ROS 工作线程需按下节实机验证。
 
 ## S100 实机验收
+
+此后的构建、标定测试和运行验收直接在 S100 执行。启用 `BUILD_NLX_TESTS`、`BUILD_NL_RTSP_CAM_TESTS`、`BUILD_NL_RTSP_CAM_CALIBRATION_TESTS` 后，`ctest --test-dir build/nl_rtsp_cam --output-on-failure` 验证传统标定文件、统一相机文件内的 `camera_info` 以及缺失标定段。
 
 使用具备 NTP/RTCP Sender Report 的摄像机，分别配置 H.264、H.265 和 MJPEG RTSP 子码流，分辨率不超过 1920×1080。对每种编码执行：
 

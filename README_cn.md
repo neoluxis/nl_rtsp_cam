@@ -1,8 +1,8 @@
 ---
 author: N. C. Lee
 created on: 2026-10-01
-updated on: 2026-10-03
-version: 0.4.0
+updated on: 2026-10-04
+version: 0.5.0
 title: S100 RTSP 摄像头 ROS 2 包
 tags:
   - ROS 2
@@ -15,6 +15,7 @@ tags:
 
 | 日期 | 版本 | 作者 | 说明 |
 | --- | --- | --- | --- |
+| 2026-10-04 | 0.5.0 | N. C. Lee | 从统一相机配置的可选 camera_info 段读取标定。 |
 | 2026-10-03 | 0.4.0 | N. C. Lee | 共享内存取流时可按需同步发布限帧标准 ROS 图像。 |
 | 2026-10-03 | 0.3.0 | N. C. Lee | 调整限帧器，减少多路相机到帧抖动导致的误丢帧。 |
 | 2026-10-03 | 0.2.0 | N. C. Lee | 增加每帧节点、相机和帧序号元数据。 |
@@ -26,13 +27,15 @@ tags:
 
 `framerate` 限制平均发布帧率；限帧器允许两帧的短时余量，避免输入与配置同为 24 FPS 时因到帧抖动持续误丢帧。
 
-Orb Ubuntu 用于编译和不依赖硬件的测试；运行硬解与硬编需要 S100。构建前应安装 `hobot-multimedia-dev`、FFmpeg 开发包和 TROS Humble。
+`camera_calibration_file_path` 可指向含可选 `camera_info` 段的相机配置 YAML；缺少该段时不发布逐帧 `camera_info`。单独使用本采集节点时仍可传入传统的 ROS 标定 YAML。
+
+构建与验证均在 S100 上执行。构建前应安装 `hobot-multimedia-dev`、FFmpeg 开发包和 TROS Humble。
 
 ## 构建
 
 ```bash
 source /opt/tros/humble/setup.bash
-colcon build --base-paths /Users/neolux/Projects/dk2026003/ai_service/nl_rtsp_cam \
+colcon build --base-paths nl_rtsp_cam \
   --packages-select nl_rtsp_cam
 source install/setup.bash
 ```

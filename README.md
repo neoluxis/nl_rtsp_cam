@@ -1,8 +1,8 @@
 ---
 author: N. C. Lee
 created on: 2026-10-01
-updated on: 2026-10-03
-version: 0.4.0
+updated on: 2026-10-04
+version: 0.5.0
 title: S100 RTSP Camera ROS 2 Package
 tags:
   - ROS 2
@@ -15,6 +15,7 @@ tags:
 
 | Date | Version | Author | Change |
 | --- | --- | --- | --- |
+| 2026-10-04 | 0.5.0 | N. C. Lee | Read optional camera_info from a unified camera configuration file. |
 | 2026-10-03 | 0.4.0 | N. C. Lee | Added subscriber-gated standard ROS images alongside shared-memory inference images. |
 | 2026-10-03 | 0.3.0 | N. C. Lee | Smoothed publication rate limiting for multi-camera input. |
 | 2026-10-03 | 0.2.0 | N. C. Lee | Added source frame metadata for multi-camera detection. |
@@ -26,13 +27,15 @@ Each published frame also has a `frame_metadata` message (`nl_image_msgs/FrameMe
 
 With `zero_copy:=true`, set `publish_ros_image:=true` to also advertise a standard NV12 `sensor_msgs/Image` topic. It copies frames only while subscribed; `ros_image_fps` limits this secondary stream. Match a standard image to `frame_metadata` by camera namespace and header stamp.
 
+`camera_calibration_file_path` accepts a camera configuration YAML with an optional nested `camera_info` section. When that section is absent, no per-frame `camera_info` is published. Direct users of this node may still supply a standalone ROS calibration YAML.
+
 `framerate` limits the average published frame rate. A two-frame allowance absorbs small arrival jitter so a 24 FPS source configured at 24 FPS is not systematically reduced.
 
 Build in TROS Humble with FFmpeg development packages and `hobot-multimedia-dev`:
 
 ```bash
 source /opt/tros/humble/setup.bash
-colcon build --base-paths /Users/neolux/Projects/dk2026003/ai_service/nl_rtsp_cam \
+colcon build --base-paths nl_rtsp_cam \
   --packages-select nl_rtsp_cam
 source install/setup.bash
 ros2 launch nl_rtsp_cam nl_rtsp_cam.launch.py \
